@@ -1,0 +1,26 @@
+##CODE TO EXECUTE:
+
+##SETUP
+```{}
+
+library(vegdistmod);
+#data(climondbioclim)
+data(distr)
+#grid = climondbioclim
+grid = stack("~/Desktop/phytoclim.gri")
+grid = grid[[1]]
+points = subset(distr, distr$tax == unique(distr$tax)[6])
+points = points[,3:4];
+
+```
+
+##Run geo-kde
+```{}
+##grid -- > a raster object (1 layer);
+##points -- > a 2 column data frame of form (lat,lon)
+
+rout = rasterExtras::gkde(grid, points[,2:1], parallel=TRUE, nclus = 4, dist.method='Haversine');
+require(viridis)
+plot(log(rout+0.00000001), col = viridis(20)) ##Cool color combo on near log scale plotting -- >> Adjustment MAY BE OK because there is not really a 0 Prob.
+points(points[,2:1], pch = 20, cex =0.5)
+```
