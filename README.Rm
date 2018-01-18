@@ -6,8 +6,12 @@
 library(vegdistmod);
 #data(climondbioclim)
 data(distr)
-#grid = climondbioclim
-grid = stack("~/Desktop/phytoclim.gri")
+grid = climondbioclim
+grid2 = stack("~/Desktop/phytoclim.gri")
+grid2 = crop(grid2, extent(grid));
+grid = grid2;
+
+
 grid = grid[[1]]
 points = subset(distr, distr$tax == unique(distr$tax)[6])
 points = points[,3:4];
