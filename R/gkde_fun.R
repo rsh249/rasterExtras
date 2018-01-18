@@ -16,9 +16,7 @@ NULL
 #'   or Pythagorean for flat images and/or small areas.
 #'   
 #' @export
-#' @examples  \dontrun
-#' abies <- get_gbif_cloud('abies');
-#' abies.fraseri <- get_gbif_cloud('abies_fraseri') 
+#' @examples  \dontrun {
 #' }
 
 gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversine'){

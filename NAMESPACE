@@ -1,3 +1,4 @@
 useDynLib(rasterExtras)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
+
