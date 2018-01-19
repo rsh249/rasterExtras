@@ -18,7 +18,7 @@ NULL
 #' @export
 #' @examples
 #' require(raster)
-#' grid = raster::raster(nrows=180, ncols=360, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
+#' grid = raster::raster(nrows=18, ncols=36, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
 #' grid = raster::setValues(grid,values=(as.vector(seq(1:raster::ncell(grid)))))
 #' points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
 #'       seq(ymin(grid), ymax(grid), length.out=100))
@@ -39,7 +39,15 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	
   	##Hidden gkde core function
   	.gkde.core.h <- function(x){
-  	  coords = latlonfromcell(as.vector(x), as.vector(raster::extent(grid)), nrow(grid), ncol(grid)); 
+  	  coords = latlonfromcell(as.vector(x), 
+  	                          as.vector(c(raster::xmin(grid),
+  	                                      raster::xmax(grid),
+  	                                      raster::ymin(grid),
+  	                                      raster::ymax(grid)         
+  	                                      )
+  	                                    ), 
+  	                          nrow(grid), 
+  	                          ncol(grid)); 
   	  d = distance(as.matrix(coords[,2:1]),as.matrix(points));
   	  di=vector();
   	  for(c in 1:nrow(coords)){
@@ -66,7 +74,15 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  splits = split(x,f);
 	  
 	  .gkde.core.p <- function(x){ 
-	    coords = latlonfromcell(as.vector(x), as.vector(raster::extent(grid)), nrow(grid), ncol(grid)); 
+	    coords = latlonfromcell(as.vector(x), 
+	                            as.vector(c(raster::xmin(grid),
+	                                        raster::xmax(grid),
+	                                        raster::ymin(grid),
+	                                        raster::ymax(grid)         
+	                            )
+	                            ), 
+	                            nrow(grid), 
+	                            ncol(grid)); 
 	    d = pythagorean(as.matrix(coords[,2:1]),as.matrix(points));
 	    di=vector();
 	    for(c in 1:nrow(coords)){
