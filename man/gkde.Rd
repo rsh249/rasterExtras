@@ -22,3 +22,7 @@ or Pythagorean for flat images and/or small areas.}
 This function requests data from a private service that
 mirrors GBIF distribution data at cloud.diversityoflife.org. Account required.
 }
+\examples{
+ \dontrun {
+}
+}
