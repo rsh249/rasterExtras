@@ -5,8 +5,7 @@ NULL
 
 #' Geographic Kernel Density Estimator using linear or Haversine distances
 #' 
-#' This function requests data from a private service that
-#' mirrors GBIF distribution data at cloud.diversityoflife.org. Account required.
+#' This function calculates a kernel density estimation for raster objects.
 #' 
 #' @param grid A raster object to match.
 #' @param points A two column data frame in the form (lon,lat) or (x,y)
