@@ -23,6 +23,12 @@ This function requests data from a private service that
 mirrors GBIF distribution data at cloud.diversityoflife.org. Account required.
 }
 \examples{
- \dontrun {
-}
+require(raster)
+grid = raster::raster(nrows=180, ncols=360, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
+grid = raster::setValues(grid,values=(as.vector(seq(1:raster::ncell(grid)))))
+points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
+      seq(ymin(grid), ymax(grid), length.out=100))
+plot(grid); points(points);
+di = gkde(grid, points, parallel=FALSE, dist.method='Pythagorean');
+plot(di)
 }

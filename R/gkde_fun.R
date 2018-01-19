@@ -16,8 +16,16 @@ NULL
 #'   or Pythagorean for flat images and/or small areas.
 #'   
 #' @export
-#' @examples  \dontrun {
-#' }
+#' @examples
+#' require(raster)
+#' grid = raster::raster(nrows=180, ncols=360, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
+#' grid = raster::setValues(grid,values=(as.vector(seq(1:raster::ncell(grid)))))
+#' points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
+#'       seq(ymin(grid), ymax(grid), length.out=100))
+#' plot(grid); points(points);
+#' di = gkde(grid, points, parallel=FALSE, dist.method='Pythagorean');
+#' plot(di)
+
 
 gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversine'){
 	zz = seq(1:raster::ncell(grid)); ##Pass to gkde
@@ -27,8 +35,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	x = seq(1:raster::ncell(grid))
   	n=25000;
   	f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
-  	splits = split(x,f)
-  	
+  	splits = split(x,f);
   	
   	##Hidden gkde core function
   	.gkde.core.h <- function(x){
@@ -53,6 +60,11 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	} else if(dist.method == "Pythagorean"){
 	  pbp = pythagorean(as.matrix(points), as.matrix(points));
 	  bw.gen = stats::bw.nrd(as.vector(pbp));
+	  x = seq(1:raster::ncell(grid))
+	  n=25000;
+	  f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
+	  splits = split(x,f);
+	  
 	  .gkde.core.p <- function(x){ 
 	    coords = latlonfromcell(as.vector(x), as.vector(raster::extent(grid)), nrow(grid), ncol(grid)); 
 	    d = pythagorean(as.matrix(coords[,2:1]),as.matrix(points));
@@ -63,7 +75,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	    return(di);
 	  }
 	  if(parallel == FALSE){
-	    di = unlist(lapply(splits, .gkde.core.h));
+	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
 	    cl = parallel::makeCluster(nclus, type ='FORK');
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
