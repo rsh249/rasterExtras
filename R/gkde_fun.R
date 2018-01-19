@@ -32,7 +32,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	pbp = distance(as.matrix(points), as.matrix(points));
   	bw.gen = stats::bw.nrd(as.vector(pbp));
   	x = seq(1:raster::ncell(grid))
-  	n=25000;
+  	n=5000;
   	f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
   	splits = split(x,f);
   	
@@ -66,13 +66,14 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	
 	} else if(dist.method == "Pythagorean"){
 	  pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
-	  if(length(pbp) > 1000000000){
+	  np = length(pbp);
+	  if(np > 1000000000){
 	    pbp = pbp[1:50000000];
 	     cat("NOTE: Subsetting points for bandwidth selection");
 	  }
 	  bw.gen = stats::bw.nrd(as.vector(pbp));
-	  x = seq(1:raster::ncell(grid))
-	  n=25000;
+	  x = seq(1:raster::ncell(grid));
+	  n=5000;
 	  f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
 	  splits = split(x,f);
 	  
