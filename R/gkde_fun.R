@@ -103,8 +103,8 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	}
 
 	r=raster::raster(nrows=nrow(grid),ncol=ncol(grid), crs="+proj=longlat +datum=WGS84",ext=raster::extent(grid))
-	r=raster::setValues(r,values=di)
-	r = raster::mask(r, grid)
+	r=raster::setValues(r,values=di);
+	r = raster::mask(r, grid);
 	return(r);
 }
 
