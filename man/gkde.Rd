@@ -19,12 +19,11 @@ gkde(grid, points, parallel = TRUE, nclus = 4, dist.method = "Haversine")
 or Pythagorean for flat images and/or small areas.}
 }
 \description{
-This function requests data from a private service that
-mirrors GBIF distribution data at cloud.diversityoflife.org. Account required.
+This function calculates a kernel density estimation for raster objects.
 }
 \examples{
 require(raster)
-grid = raster::raster(nrows=180, ncols=360, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
+grid = raster::raster(nrows=18, ncols=36, xmn=-180, xmx=180, ymn=-90, ymx=90, vals=NULL)
 grid = raster::setValues(grid,values=(as.vector(seq(1:raster::ncell(grid)))))
 points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
       seq(ymin(grid), ymax(grid), length.out=100))
