@@ -89,7 +89,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	                            ncol(grid)); 
 	    d = pythagorean(as.matrix(coords[,2:1]),as.matrix(points));
 	    di=vector();
-	    for(c in 1:nrow(coords)){
+	    for(c in 1:raster::nrow(coords)){
 	      di[c] = stats::density(d[c,], n = 1, kernel = 'gaussian', from = 0,  to = 0,  bw = bw.gen, na.rm = TRUE)$y;
 	    }
 	    return(di);
@@ -98,7 +98,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
 	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c(grid, points, bw.gen));
+	    parallel::clusterExport(cl, c(grid, points, bw.gen, splits));
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
 	    parallel::stopCluster(cl);
 	  }
