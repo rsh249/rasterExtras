@@ -73,7 +73,9 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  }
 	  bw.gen = stats::bw.nrd(as.vector(pbp));
 	  xx = seq(1:raster::ncell(grid));
-	  n=5000;
+	  std = 0.00000001136095; ##approximate GB/cell in an R matrix.
+	  nm = 1/(1.34*std*raster::ncell(grid)); ##Number of rows to hit 1GB
+	  n=10*nm;
 	  f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
 	  splits = split(xx, f);
 	  
@@ -97,7 +99,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  if(parallel == FALSE){
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
-	    cl = parallel::makeCluster(nclus, type ='FORK');
+	    cl = parallel::makeCluster(nclus, type ='SOCK');
 	    parallel::clusterExport(cl, c(grid, points, bw.gen, splits));
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
 	    parallel::stopCluster(cl);
