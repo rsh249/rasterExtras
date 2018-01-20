@@ -74,7 +74,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  bw.gen = stats::bw.nrd(as.vector(pbp));
 	  xx = seq(1:raster::ncell(grid));
 	  n=5000;
-	  f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(xx)]
+	  f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
 	  splits = split(xx, f);
 	  
 	  .gkde.core.p <- function(x){ 
