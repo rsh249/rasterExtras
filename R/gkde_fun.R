@@ -100,7 +100,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
 	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c(grid, points, bw.gen, splits));
+	    parallel::clusterExport(cl, c(grid, points, bw.gen, splits),envir=environment());
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
 	    parallel::stopCluster(cl);
 	  }
