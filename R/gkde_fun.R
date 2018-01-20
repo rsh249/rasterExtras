@@ -72,10 +72,10 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	     cat("NOTE: Subsetting points for bandwidth selection");
 	  }
 	  bw.gen = stats::bw.nrd(as.vector(pbp));
-	  x = seq(1:raster::ncell(grid));
+	  xx = seq(1:raster::ncell(grid));
 	  n=5000;
-	  f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
-	  splits = split(x,f);
+	  f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(xx)]
+	  splits = split(xx, f);
 	  
 	  .gkde.core.p <- function(x){ 
 	    coords = latlonfromcell(as.vector(x), 
@@ -98,7 +98,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
 	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c(grid, points));
+	    parallel::clusterExport(cl, c(grid, points, bw.gen));
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
 	    parallel::stopCluster(cl);
 	  }
