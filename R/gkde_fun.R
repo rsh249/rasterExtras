@@ -29,40 +29,46 @@ NULL
 gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversine'){
 	zz = seq(1:raster::ncell(grid)); ##Pass to gkde
 	if(dist.method == "Haversine"){
-  	pbp = distance(as.matrix(points), as.matrix(points));
-  	bw.gen = stats::bw.nrd(as.vector(pbp));
-  	x = seq(1:raster::ncell(grid))
-  	n=5000;
-  	f <- sort(rep(1:(trunc(length(x)/n)+1),n))[1:length(x)]
-  	splits = split(x,f);
-  	
-  	##Hidden gkde core function
-  	.gkde.core.h <- function(x){
-  	  coords = latlonfromcell(as.vector(x), 
-  	                          as.vector(c(raster::xmin(grid),
-  	                                      raster::xmax(grid),
-  	                                      raster::ymin(grid),
-  	                                      raster::ymax(grid)         
-  	                                      )
-  	                                    ), 
-  	                          nrow(grid), 
-  	                          ncol(grid)); 
-  	  d = distance(as.matrix(coords[,2:1]),as.matrix(points));
-  	  di=vector();
-  	  for(c in 1:nrow(coords)){
-  	    di[c] = stats::density(d[c,], n = 1, kernel = 'gaussian', from = 0,  to = 0,  bw = bw.gen, na.rm = TRUE)$y;
-  	  }
-  	  return(di);
-  	}
-
-  	if(parallel == FALSE){
-  	  #di = .gkde.core.h(zz);
-  	  di = unlist(lapply(splits, .gkde.core.h));
-  	} else {
-  	  cl = parallel::makeCluster(nclus, type ='FORK');
-  	  di = unlist(parallel::parLapply(cl, splits, .gkde.core.h));
-  	  parallel::stopCluster(cl);
-  	}
+	  pbp = as.vector(distance(as.matrix(points), as.matrix(points)));
+	  np = length(pbp);
+	  if(np > 1000000000){
+	    pbp = pbp[1:50000000];
+	    cat("NOTE: Subsetting points for bandwidth selection");
+	  }
+	  bw.gen = stats::bw.nrd(as.vector(pbp));
+	  xx = seq(1:raster::ncell(grid));
+	  std = 0.00000001136095; ##approximate GB/cell in an R matrix.
+	  nm = 1/(1.34*std*raster::ncell(grid)); ##Number of rows to hit 1GB
+	  n=10*nm;
+	  f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
+	  splits = split(xx, f);
+	  
+	  .gkde.core.h <- function(x){ 
+	    coords = latlonfromcell(as.vector(x), 
+	                            as.vector(c(raster::xmin(grid),
+	                                        raster::xmax(grid),
+	                                        raster::ymin(grid),
+	                                        raster::ymax(grid)         
+	                            )
+	                            ), 
+	                            nrow(grid), 
+	                            ncol(grid)); 
+	    d = distance(as.matrix(coords[,2:1]),as.matrix(points));
+	    di=vector();
+	    for(c in 1:raster::nrow(coords)){
+	      di[c] = stats::density(d[c,], n = 1, kernel = 'gaussian', from = 0,  to = 0,  bw = bw.gen, na.rm = TRUE)$y;
+	    }
+	    return(di);
+	  }
+	  if(parallel == FALSE){
+	    di = unlist(lapply(splits, .gkde.core.p));
+	  } else {
+	    cl = parallel::makeCluster(nclus, type ='SOCK');
+	    parallel::clusterExport(cl, c("grid", "points", "bw.gen", "splits"),envir=environment());
+	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.h));
+	    parallel::stopCluster(cl);
+	  }
+	  
   	
 	} else if(dist.method == "Pythagorean"){
 	  pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
