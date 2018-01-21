@@ -72,7 +72,8 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	
 	} else if(dist.method == "Pythagorean"){
  
-
+	  xx = seq(1:raster::ncell(grid));
+	  
 	  #one cell of a matrix should contain a double, so:
 	  dd = 16; #16 bytes per cell.
 	  vol = dd*(nrow(points)^2)/1024/1024/1024;
