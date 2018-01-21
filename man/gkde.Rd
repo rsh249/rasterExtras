@@ -28,6 +28,6 @@ grid = raster::setValues(grid,values=(as.vector(seq(1:raster::ncell(grid)))))
 points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
       seq(ymin(grid), ymax(grid), length.out=100))
 plot(grid); points(points);
-di = gkde(grid, points, parallel=FALSE, dist.method='Pythagorean');
+di = gkde(grid, points, parallel=TRUE, dist.method='Pythagorean');
 plot(di)
 }

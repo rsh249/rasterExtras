@@ -22,7 +22,7 @@ NULL
 #' points = cbind(seq(xmin(grid), xmax(grid), length.out=100), 
 #'       seq(ymin(grid), ymax(grid), length.out=100))
 #' plot(grid); points(points);
-#' di = gkde(grid, points, parallel=FALSE, dist.method='Pythagorean');
+#' di = gkde(grid, points, parallel=TRUE, dist.method='Pythagorean');
 #' plot(di)
 
 
@@ -71,19 +71,35 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  
   	
 	} else if(dist.method == "Pythagorean"){
-	  pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
-	  np = length(pbp);
-	  if(np > 1000000000){
-	    pbp = pbp[1:50000000];
-	     cat("NOTE: Subsetting points for bandwidth selection");
+ 
+
+	  #one cell of a matrix should contain a double, so:
+	  dd = 16; #16 bytes per cell.
+	  vol = dd*(nrow(points)^2)/1024/1024/1024;
+	  if (vol > 2){#if distance matrix will be > than
+	    ##Bootstrap bandwidth selection
+	      n= 10000;
+	      bw = vector();
+	      for(i in 1:n){
+  	      sam = sample(c(1:nrow(points)), 100, replace =TRUE)
+	        p = points[sam,];
+	        ps = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
+	        bw[i] = stats::bw.nrd(as.vector(ps));
+	      }
+	     bw.gen = stats::median(bw);
+	  } else {
+	    pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
+  	  bw.gen = stats::bw.nrd(as.vector(pbp));
+    }
+
+	  vol = dd*(nrow(points)*raster::ncell(grid))/1024/1024/1024;
+	  targ.n = as.integer(5/vol); 
+	  if(targ.n > raster::ncell(grid)) {
+	     splits = list(seq(1:raster::ncell(grid)));
+	  } else {
+	     zz = as.integer(raster::ncell(grid)/targ.n);
+	     splits = split(xx, zz);
 	  }
-	  bw.gen = stats::bw.nrd(as.vector(pbp));
-	  xx = seq(1:raster::ncell(grid));
-	  std = 0.00000001136095; ##approximate GB/cell in an R matrix.
-	  nm = 1/(1.34*std*raster::ncell(grid)); ##Number of rows to hit 1GB
-	  n=10*nm;
-	  f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
-	  splits = split(xx, f);
 	  
 	  .gkde.core.p <- function(x){ 
 	    coords = latlonfromcell(as.vector(x), 
@@ -102,9 +118,13 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	    }
 	    return(di);
 	  }
+	  
 	  if(parallel == FALSE){
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
+	    if(nclus > length(splits)){
+	      nclus = length(splits)
+	    }
 	    cl = parallel::makeCluster(nclus, type ='SOCK');
 	    parallel::clusterExport(cl, c("grid", "points", "bw.gen", "splits"),envir=environment());
 	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
