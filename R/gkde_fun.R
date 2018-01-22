@@ -84,7 +84,7 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	      for(i in 1:n){
   	      sam = sample(c(1:nrow(points)), 100, replace =TRUE)
 	        p = points[sam,];
-	        ps = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
+	        ps = as.vector(pythagorean(as.matrix(points[sam,]), as.matrix(points[sam,])));
 	        bw[i] = stats::bw.nrd(as.vector(ps));
 	      }
 	     bw.gen = stats::median(bw);
@@ -93,9 +93,9 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
   	  bw.gen = stats::bw.nrd(as.vector(pbp));
     }
 
-	  vol = dd*(nrow(points)*raster::ncell(grid))/1024/1024/1024;
-	  targ.n = as.integer(5/vol); 
-	  if(targ.n < raster::ncell(grid)) {
+	  vol = (dd*(nrow(points)*raster::ncell(grid)))/1024/1024/1024;
+	  targ.n = ceiling((5/vol)*raster::ncell(grid)); 
+	  if(targ.n > raster::ncell(grid)) {
 	     splits = list(seq(1:raster::ncell(grid)));
 	  } else {
 	    n = targ.n
