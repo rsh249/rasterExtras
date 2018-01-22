@@ -95,11 +95,12 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 
 	  vol = dd*(nrow(points)*raster::ncell(grid))/1024/1024/1024;
 	  targ.n = as.integer(5/vol); 
-	  if(targ.n > raster::ncell(grid)) {
+	  if(targ.n < raster::ncell(grid)) {
 	     splits = list(seq(1:raster::ncell(grid)));
 	  } else {
-	     zz = as.integer(raster::ncell(grid)/targ.n);
-	     splits = split(xx, zz);
+	    n = targ.n
+	    f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
+	    splits = split(xx,f)
 	  }
 	  
 	  .gkde.core.p <- function(x){ 
@@ -123,12 +124,16 @@ gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversin
 	  if(parallel == FALSE){
 	    di = unlist(lapply(splits, .gkde.core.p));
 	  } else {
+	    
 	    if(nclus > length(splits)){
-	      nclus = length(splits)
+	      n=length(xx)/nclus;
+	      f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
+	      splits = split(xx,f)
 	    }
+	    
 	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c("grid", "points", "bw.gen"),envir=environment());
-	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p));
+	    parallel::clusterExport(cl, c("grid", "points", "bw.gen", "latlonfromcell", "pythagorean"),envir=environment());
+	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p)); ##Error in compatible types here;;;
 	    parallel::stopCluster(cl);
 	  }
 	} else {
