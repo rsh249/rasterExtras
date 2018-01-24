@@ -26,127 +26,196 @@ NULL
 #' plot(di)
 
 
-gkde <- function(grid, points, parallel=TRUE, nclus = 4, dist.method = 'Haversine'){
-	zz = seq(1:raster::ncell(grid)); ##Pass to gkde
-	if(dist.method == "Haversine"){
-	  pbp = as.vector(distance(as.matrix(points), as.matrix(points)));
-	  np = length(pbp);
-	  if(np > 1000000000){
-	    pbp = pbp[1:50000000];
-	    cat("NOTE: Subsetting points for bandwidth selection");
-	  }
-	  bw.gen = stats::bw.nrd(as.vector(pbp));
-	  xx = seq(1:raster::ncell(grid));
-	  std = 0.00000001136095; ##approximate GB/cell in an R matrix.
-	  nm = 1/(1.34*std*raster::ncell(grid)); ##Number of rows to hit 1GB
-	  n=10*nm;
-	  f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
-	  splits = split(xx, f);
-	  
-	  .gkde.core.h <- function(x){ 
-	    coords = latlonfromcell(as.vector(x), 
-	                            as.vector(c(raster::xmin(grid),
-	                                        raster::xmax(grid),
-	                                        raster::ymin(grid),
-	                                        raster::ymax(grid)         
-	                            )
-	                            ), 
-	                            nrow(grid), 
-	                            ncol(grid)); 
-	    d = distance(as.matrix(coords[,2:1]),as.matrix(points));
-	    di=vector();
-	    for(c in 1:raster::nrow(coords)){
-	      di[c] = stats::density(d[c,], n = 1, kernel = 'gaussian', from = 0,  to = 0,  bw = bw.gen, na.rm = TRUE)$y;
-	    }
-	    return(di);
-	  }
-	  if(parallel == FALSE){
-	    di = unlist(lapply(splits, .gkde.core.p));
-	  } else {
-	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c("grid", "points", "bw.gen", "splits"),envir=environment());
-	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.h));
-	    parallel::stopCluster(cl);
-	  }
-	  
-  	
-	} else if(dist.method == "Pythagorean"){
- 
-	  xx = seq(1:raster::ncell(grid));
-	  
-	  #one cell of a matrix should contain a double, so:
-	  dd = 16; #16 bytes per cell.
-	  vol = dd*(nrow(points)^2)/1024/1024/1024;
-	  if (vol > 2){#if distance matrix will be > than
-	    ##Bootstrap bandwidth selection
-	      n= 10000;
-	      bw = vector();
-	      for(i in 1:n){
-  	      sam = sample(c(1:nrow(points)), 100, replace =TRUE)
-	        p = points[sam,];
-	        ps = as.vector(pythagorean(as.matrix(points[sam,]), as.matrix(points[sam,])));
-	        bw[i] = stats::bw.nrd(as.vector(ps));
-	      }
-	     bw.gen = stats::median(bw);
-	  } else {
-	    pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)));
-  	  bw.gen = stats::bw.nrd(as.vector(pbp));
+gkde <-
+  function(grid,
+           points,
+           parallel = TRUE,
+           nclus = 4,
+           dist.method = 'Haversine') {
+    .gkde.core.h <- function(x) {
+      require(rasterExtras)
+      coords = latlonfromcell(as.vector(x),
+                              as.vector(
+                                c(
+                                  raster::xmin(grid),
+                                  raster::xmax(grid),
+                                  raster::ymin(grid),
+                                  raster::ymax(grid)
+                                )
+                              ),
+                              nrow(grid),
+                              ncol(grid))
+      
+      d = distance(as.matrix(coords[, 2:1]), as.matrix(points))
+      
+      di = vector()
+      
+      for (c in 1:raster::nrow(coords)) {
+        di[c] = stats::density(
+          d[c, ],
+          n = 1,
+          kernel = 'gaussian',
+          from = 0,
+          to = 0,
+          bw = bw.gen,
+          na.rm = TRUE
+        )$y
+        
+      }
+      return(di)
+      
     }
-
-	  vol = (dd*(nrow(points)*raster::ncell(grid)))/1024/1024/1024;
-	  targ.n = ceiling((5/vol)*raster::ncell(grid)); 
-	  if(targ.n > raster::ncell(grid)) {
-	     splits = list(seq(1:raster::ncell(grid)));
-	  } else {
-	    n = targ.n
-	    f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
-	    splits = split(xx,f)
-	  }
-	  
-	  .gkde.core.p <- function(x){ 
-	    coords = latlonfromcell(as.vector(x), 
-	                            as.vector(c(raster::xmin(grid),
-	                                        raster::xmax(grid),
-	                                        raster::ymin(grid),
-	                                        raster::ymax(grid)         
-	                            )
-	                            ), 
-	                            nrow(grid), 
-	                            ncol(grid)); 
-	    d = pythagorean(as.matrix(coords[,2:1]),as.matrix(points));
-	    di=vector();
-	    for(c in 1:raster::nrow(coords)){
-	      di[c] = stats::density(d[c,], n = 1, kernel = 'gaussian', from = 0,  to = 0,  bw = bw.gen, na.rm = TRUE)$y;
-	    }
-	    return(di);
-	  }
-	  
-	  if(parallel == FALSE){
-	    di = unlist(lapply(splits, .gkde.core.p));
-	  } else {
-	    
-	    if(nclus > length(splits)){
-	      n=length(xx)/nclus;
-	      f <- sort(rep(1:(trunc(length(xx)/n)+1),n))[1:length(xx)]
-	      splits = split(xx,f)
-	    }
-	    
-	    cl = parallel::makeCluster(nclus, type ='SOCK');
-	    parallel::clusterExport(cl, c("grid", "points", "bw.gen", "latlonfromcell", "pythagorean"),envir=environment());
-	    di = unlist(parallel::parLapply(cl, splits, .gkde.core.p)); ##Error in compatible types here;;;
-	    parallel::stopCluster(cl);
-	  }
-	} else {
-	  cat("ERR1: Bad Distance method declaration\n");
-	  return(NULL);
-	}
-
-	r=raster::raster(nrows=nrow(grid),ncol=ncol(grid), crs="+proj=longlat +datum=WGS84",ext=raster::extent(grid))
-	r=raster::setValues(r,values=di);
-	r = raster::mask(r, grid);
-	return(r);
+    .gkde.core.p <- function(x) {
+      coords = latlonfromcell(as.vector(x),
+                              as.vector(
+                                c(
+                                  raster::xmin(grid),
+                                  raster::xmax(grid),
+                                  raster::ymin(grid),
+                                  raster::ymax(grid)
+                                )
+                              ),
+                              nrow(grid),
+                              ncol(grid))
+      
+      d = pythagorean(as.matrix(coords[, 2:1]), as.matrix(points))
+      
+      di = vector()
+      
+      for (c in 1:raster::nrow(coords)) {
+        di[c] = stats::density(
+          d[c, ],
+          n = 1,
+          kernel = 'gaussian',
+          from = 0,
+          to = 0,
+          bw = bw.gen,
+          na.rm = TRUE
+        )$y
+        
+      }
+      return(di)
+      
+    }
+    
+    
+    
+    
+    xx = seq(1:raster::ncell(grid))
+    
+    #one cell of a matrix should contain a double, so:
+    dd = 16
+    #16 bytes per cell. Estimates seem off using this value for memory of doubles in matrices
+    vol = dd * (nrow(points) ^ 2) / 1024 / 1024 / 1024
+    
+    if (vol > 2) {
+      #if distance matrix will be > than
+      ##Bootstrap bandwidth selection
+      n = 10000
+      
+      bw = vector()
+      
+      for (i in 1:n) {
+        sam = sample(c(1:nrow(points)), 100, replace = TRUE)
+        p = points[sam, ]
+        
+        if (dist.method == "Pythagorean") {
+          ps = as.vector(pythagorean(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+          
+        } else if (dist.method == "Haversine") {
+          ps = as.vector(distance(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+          
+        }
+        bw[i] = stats::bw.nrd(as.vector(ps))
+        
+      }
+      bw.gen = stats::median(bw)
+      
+    } else {
+      pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)))
+      
+      if (dist.method == "Pythagorean") {
+        pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)))
+        
+      } else if (dist.method == "Haversine") {
+        pbp = as.vector(distance(as.matrix(points), as.matrix(points)))
+        
+      }
+      bw.gen = stats::bw.nrd(as.vector(pbp))
+      
+    }
+    
+    ##Check grid x points matrix size.
+    vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
+    
+    targ.n = ceiling((5 / vol) * raster::ncell(grid))
+    
+    if (targ.n > raster::ncell(grid)) {
+      splits = list(seq(1:raster::ncell(grid)))
+      
+    } else {
+      n = targ.n
+      f <- sort(rep(1:(trunc(length(
+        xx
+      ) / n) + 1), n))[1:length(xx)]
+      splits = split(xx, f)
+    }
+    
+    
+    if (parallel == FALSE) {
+      if (dist.method == "Pythagorean") {
+        di = unlist(lapply(splits, .gkde.core.p))
+        
+      } else if (dist.method == "Haversine") {
+        di = unlist(lapply(splits, .gkde.core.h))
+        
+      }
+    } else {
+      if (nclus > length(splits)) {
+        n = length(xx) / nclus
+        
+        f <- sort(rep(1:(trunc(length(
+          xx
+        ) / n) + 1), n))[1:length(xx)]
+        splits = split(xx, f)
+      }
+      
+      cl = parallel::makeCluster(nclus, type = 'SOCK')
+      
+      parallel::clusterExport(cl,
+                              c(
+                                "grid",
+                                "points",
+                                "bw.gen",
+                                "latlonfromcell",
+                                "pythagorean"
+                              ),
+                              envir = environment())
+      
+      if (dist.method == "Pythagorean") {
+        di = unlist(parallel::parLapply(cl, splits, .gkde.core.p))
+        
+      } else if (dist.method == "Haversine") {
+        di = unlist(parallel::parLapply(cl, splits, .gkde.core.h))
+        
+      }
+      parallel::stopCluster(cl)
+      
+    }
+    r = raster::raster(
+      nrows = nrow(grid),
+      ncol = ncol(grid),
+      crs = "+proj=longlat +datum=WGS84",
+      ext = raster::extent(grid)
+    )
+    r = raster::setValues(r, values = di)
+    
+    r = raster::mask(r, grid)
+    
+    return(r)
+    
+  }
 }
-
 
 
 
