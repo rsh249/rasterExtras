@@ -28,7 +28,8 @@ Rcpp::NumericMatrix distance(Rcpp::NumericMatrix start, Rcpp::NumericMatrix end)
             
             double a = pow(sin(dlat / 2), 2) + (cos(lat1) * cos(lat2) * pow(sin(dlon / 2),2));
             double d = 2 * atan2(sqrt(a), sqrt(1 - a)) * R;
-            out(i,n) = d;
+            float dd = d;
+            out(i,n) = dd;
             ++zz;
         }
     }

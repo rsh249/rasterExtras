@@ -32,6 +32,7 @@ gkde <-
            parallel = TRUE,
            nclus = 4,
            dist.method = 'Haversine') {
+    
     .gkde.core.h <- function(x) {
       require(rasterExtras)
       coords = latlonfromcell(as.vector(x),
@@ -104,12 +105,14 @@ gkde <-
     xx = seq(1:raster::ncell(grid))
     
     #one cell of a matrix should contain a double, so:
-    dd = 16
+    dd = 32; ##Double double because Rcpp for some reason doubles ram on return.
+    
+    
     #16 bytes per cell. Estimates seem off using this value for memory of doubles in matrices
     vol = dd * (nrow(points) ^ 2) / 1024 / 1024 / 1024
     
     if (vol > 2) {
-      #if distance matrix will be > than
+      #if distance matrix will be > than ???
       ##Bootstrap bandwidth selection
       n = 10000
       
@@ -139,6 +142,7 @@ gkde <-
         
       } else if (dist.method == "Haversine") {
         pbp = as.vector(distance(as.matrix(points), as.matrix(points)))
+        pbp = na.omit(pbp)
         
       }
       bw.gen = stats::bw.nrd(as.vector(pbp))
@@ -147,8 +151,8 @@ gkde <-
     
     ##Check grid x points matrix size.
     vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
-    
-    targ.n = ceiling((5 / vol) * raster::ncell(grid))
+    ramtarg= 20;
+    targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
     
     if (targ.n > raster::ncell(grid)) {
       splits = list(seq(1:raster::ncell(grid)))
@@ -180,6 +184,15 @@ gkde <-
         splits = split(xx, f)
       }
       
+      ##Reporting bloc
+      cat("BEGIN PARALLEL COMPUTATION\n");
+      cat("Core count: ", nclus, "\n");
+      cat("Cells/iteration: ", length(splits[[1]]), "of", ncell(grid), "\n")
+      cat("Points: ", nrow(points), "\n");
+      cat("Maximum RAM per proc.: ", ramtarg/nclus, "\n");
+      cat("Distance Method: ", dist.method, "\n\n");
+      ###
+      p = proc.time();
       cl = parallel::makeCluster(nclus, type = 'SOCK')
       
       parallel::clusterExport(cl,
@@ -200,6 +213,8 @@ gkde <-
         
       }
       parallel::stopCluster(cl)
+      ep = proc.time() - p;
+      cat("Time elapsed: ", ep[[3]], "\n\n");
       
     }
     r = raster::raster(
@@ -215,7 +230,7 @@ gkde <-
     return(r)
     
   }
-}
+
 
 
 
