@@ -13,6 +13,7 @@ NULL
 #' @param nclus IF parallel==TRUE then how many cores in the cluster.
 #' @param dist.method Which distance should we use? Haversine for lat/long projections, 
 #'   or Pythagorean for flat images and/or small areas.
+#' @param maxram. Maximum theoretical RAM usage. Will be divided by nclus for parallel jobs.
 #'   
 #' @export
 #' @examples
@@ -31,7 +32,8 @@ gkde <-
            points,
            parallel = TRUE,
            nclus = 4,
-           dist.method = 'Haversine') {
+           dist.method = 'Haversine',
+           maxram=4) {
     
     .gkde.core.h <- function(x) {
       require(rasterExtras)
@@ -111,7 +113,7 @@ gkde <-
     #16 bytes per cell. Estimates seem off using this value for memory of doubles in matrices
     vol = dd * (nrow(points) ^ 2) / 1024 / 1024 / 1024
     
-    if (vol > 10) {
+    if (vol > maxram) {
       #if distance matrix will be > than ???
       ##Bootstrap bandwidth selection
       n = 1000
@@ -151,7 +153,7 @@ gkde <-
     
     ##Check grid x points matrix size.
     vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
-    ramtarg= 20;
+    ramtarg= maxram/nclus;
     targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
     
     if (targ.n > raster::ncell(grid)) {
