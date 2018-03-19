@@ -111,10 +111,10 @@ gkde <-
     #16 bytes per cell. Estimates seem off using this value for memory of doubles in matrices
     vol = dd * (nrow(points) ^ 2) / 1024 / 1024 / 1024
     
-    if (vol > 2) {
+    if (vol > 10) {
       #if distance matrix will be > than ???
       ##Bootstrap bandwidth selection
-      n = 10000
+      n = 1000
       
       bw = vector()
       
