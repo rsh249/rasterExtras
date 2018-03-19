@@ -158,7 +158,7 @@ gkde <-
     
     ##Check grid x points matrix size.
     vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
-    ramtarg= maxram/nclus;
+    ramtarg= maxram/2;
     targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
     
     if (targ.n > raster::ncell(grid)) {
