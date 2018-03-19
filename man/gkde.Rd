@@ -4,7 +4,8 @@
 \alias{gkde}
 \title{Geographic Kernel Density Estimator using linear or Haversine distances}
 \usage{
-gkde(grid, points, parallel = TRUE, nclus = 4, dist.method = "Haversine")
+gkde(grid, points, parallel = TRUE, nclus = 4, dist.method = "Haversine",
+  maxram = 4, bw = "nrd0")
 }
 \arguments{
 \item{grid}{A raster object to match.}
@@ -15,8 +16,11 @@ gkde(grid, points, parallel = TRUE, nclus = 4, dist.method = "Haversine")
 
 \item{nclus}{IF parallel==TRUE then how many cores in the cluster.}
 
-\item{dist.method}{Which distance should we use? Haversine for lat/long projections, 
-or Pythagorean for flat images and/or small areas.}
+\item{dist.method}{Which distance should we use? Haversine for lat/long projections,or Pythagorean for flat images and/or small areas.}
+
+\item{maxram}{Maximum theoretical RAM usage. Will be divided by nclus for parallel jobs.}
+
+\item{bw}{Bandwidth. Either 'nrd0' to find a default bandwidth (advised when points data are small), or a numeric value giving a suitable bandwidth (predetermined by you).}
 }
 \description{
 This function calculates a kernel density estimation for raster objects.

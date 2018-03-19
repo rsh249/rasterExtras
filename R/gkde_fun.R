@@ -11,9 +11,9 @@ NULL
 #' @param points A two column data frame in the form (lon,lat) or (x,y)
 #' @param parallel TRUE or FALSE, should this code be executed in parallel.
 #' @param nclus IF parallel==TRUE then how many cores in the cluster.
-#' @param dist.method Which distance should we use? Haversine for lat/long projections, 
-#'   or Pythagorean for flat images and/or small areas.
-#' @param maxram. Maximum theoretical RAM usage. Will be divided by nclus for parallel jobs.
+#' @param dist.method Which distance should we use? Haversine for lat/long projections,or Pythagorean for flat images and/or small areas.
+#' @param maxram Maximum theoretical RAM usage. Will be divided by nclus for parallel jobs.
+#' @param bw Bandwidth. Either 'nrd0' to find a default bandwidth (advised when points data are small), or a numeric value giving a suitable bandwidth (predetermined by you).
 #'   
 #' @export
 #' @examples
@@ -33,7 +33,7 @@ gkde <-
            parallel = TRUE,
            nclus = 4,
            dist.method = 'Haversine',
-           maxram=4) {
+           maxram=4, bw = 'nrd0') {
     
     .gkde.core.h <- function(x) {
       require(rasterExtras)
@@ -113,42 +113,47 @@ gkde <-
     #16 bytes per cell. Estimates seem off using this value for memory of doubles in matrices
     vol = dd * (nrow(points) ^ 2) / 1024 / 1024 / 1024
     
-    if (vol > maxram) {
-      #if distance matrix will be > than ???
-      ##Bootstrap bandwidth selection
-      n = 1000
-      
-      bw = vector()
-      
-      for (i in 1:n) {
-        sam = sample(c(1:nrow(points)), 100, replace = TRUE)
-        p = points[sam, ]
+    
+    if(bw=='nrd0'){
+      if (vol > maxram) {
+        #if distance matrix will be > than ???
+        ##Bootstrap bandwidth selection
+        n = 1000
         
-        if (dist.method == "Pythagorean") {
-          ps = as.vector(pythagorean(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+        bw = vector()
+        
+        for (i in 1:n) {
+          sam = sample(c(1:nrow(points)), 100, replace = TRUE)
+          p = points[sam, ]
           
-        } else if (dist.method == "Haversine") {
-          ps = as.vector(distance(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+          if (dist.method == "Pythagorean") {
+            ps = as.vector(pythagorean(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+            
+          } else if (dist.method == "Haversine") {
+            ps = as.vector(distance(as.matrix(points[sam, ]), as.matrix(points[sam, ])))
+            
+          }
+          bw[i] = stats::bw.nrd(as.vector(ps))
           
         }
-        bw[i] = stats::bw.nrd(as.vector(ps))
+        bw.gen = stats::median(bw)
         
-      }
-      bw.gen = stats::median(bw)
-      
-    } else {
-      pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)))
-      
-      if (dist.method == "Pythagorean") {
+      } else {
         pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)))
         
-      } else if (dist.method == "Haversine") {
-        pbp = as.vector(distance(as.matrix(points), as.matrix(points)))
-        pbp = na.omit(pbp)
+        if (dist.method == "Pythagorean") {
+          pbp = as.vector(pythagorean(as.matrix(points), as.matrix(points)))
+          
+        } else if (dist.method == "Haversine") {
+          pbp = as.vector(distance(as.matrix(points), as.matrix(points)))
+          pbp = stats::na.omit(pbp)
+          
+        }
+        bw.gen = stats::bw.nrd(as.vector(pbp))
         
       }
-      bw.gen = stats::bw.nrd(as.vector(pbp))
-      
+    } else {
+      bw.gen = bw;
     }
     
     ##Check grid x points matrix size.
@@ -189,7 +194,7 @@ gkde <-
       ##Reporting bloc
       cat("BEGIN PARALLEL COMPUTATION\n");
       cat("Core count: ", nclus, "\n");
-      cat("Cells/iteration: ", length(splits[[1]]), "of", ncell(grid), "\n")
+      cat("Cells/iteration: ", length(splits[[1]]), "of", raster::ncell(grid), "\n")
       cat("Points: ", nrow(points), "\n");
       cat("Maximum RAM per proc.: ", ramtarg/nclus, "\n");
       cat("Distance Method: ", dist.method, "\n\n");
