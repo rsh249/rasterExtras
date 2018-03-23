@@ -166,9 +166,7 @@ gkde <-
       
     } else {
       n = targ.n
-      f <- sort(rep(1:(trunc(length(
-        xx
-      ) / n) + 1), n))[1:length(xx)]
+      f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
       splits = split(xx, f)
     }
     
@@ -196,7 +194,7 @@ gkde <-
       cat("Core count: ", nclus, "\n");
       cat("Cells/iteration: ", length(splits[[1]]), "of", raster::ncell(grid), "\n")
       cat("Points: ", nrow(points), "\n");
-      cat("Maximum RAM per proc.: ", ramtarg/nclus, "\n");
+      cat("Maximum RAM per proc.: ", maxram/nclus, "\n");
       cat("Distance Method: ", dist.method, "\n\n");
       ###
       p = proc.time();
