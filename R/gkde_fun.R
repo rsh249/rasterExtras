@@ -225,7 +225,7 @@ gkde <-
     r = raster::raster(
       nrows = nrow(grid),
       ncol = ncol(grid),
-      crs = "+proj=longlat +datum=WGS84",
+      crs = raster::crs(grid),
       ext = raster::extent(grid)
     )
     r = raster::setValues(r, values = di)
