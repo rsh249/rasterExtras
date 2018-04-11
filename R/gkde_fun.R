@@ -392,7 +392,6 @@ dist2point <-
                               c(
                                 "grid",
                                 "points",
-                                "bw.gen",
                                 "latlonfromcell",
                                 "pythagorean"
                               ),
