@@ -41,7 +41,6 @@ gkde <-
            maxram=4, bw = 200) {
     
     
-    dd =32;
     bw.gen = bw;
     .gkde.core.h <- function(x) {
       require(rasterExtras)
@@ -109,23 +108,26 @@ gkde <-
       
     }
     
+    dd =8;
     xx = seq(1:raster::ncell(grid))
-    ##Check grid x points matrix size.
+    ##Check max matrix size.
     vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
-    ramtarg= maxram/2;
-    targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
-    
-    if (targ.n > raster::ncell(grid)) {
-      splits = list(seq(1:raster::ncell(grid)))
-      
-    } else {
-      n = targ.n
-      f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
-      splits = split(xx, f)
-    }
-    
+     
     
     if (parallel == FALSE) {
+      ramtarg= maxram;
+      
+      targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
+      
+      if (targ.n > raster::ncell(grid)) {
+        splits = list(seq(1:raster::ncell(grid)))
+        
+      } else {
+        n = targ.n
+        f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
+        splits = split(xx, f)
+      }
+      
       if (dist.method == "Pythagorean") {
         di = unlist(lapply(splits, .gkde.core.p))
         
@@ -134,12 +136,23 @@ gkde <-
         
       }
     } else {
-      if (nclus > length(splits)) {
-        n = length(xx) / nclus
+      ramtarg= maxram/nclus;
+      
+      targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
+      
+      if (targ.n > raster::ncell(grid)) {
+        splits = list(seq(1:raster::ncell(grid)))
         
-        f <- sort(rep(1:(trunc(length(
-          xx
-        ) / n) + 1), n))[1:length(xx)]
+      } else {
+        n = targ.n
+        f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
+        splits = split(xx, f)
+      }
+      
+      if (nclus > length(splits)) {
+        n = targ.n / nclus;
+        
+        f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
         splits = split(xx, f)
       }
       
@@ -147,6 +160,7 @@ gkde <-
       cat("BEGIN PARALLEL COMPUTATION\n");
       cat("Core count: ", nclus, "\n");
       cat("Cells/iteration: ", length(splits[[1]]), "of", raster::ncell(grid), "\n")
+      cat("Iterations total: ", raster::ncell(grid)/length(splits[[1]]), "\n")
       cat("Points: ", nrow(points), "\n");
       cat("Maximum RAM per proc.: ", maxram/nclus, "\n");
       cat("Distance Method: ", dist.method, "\n\n");
@@ -294,8 +308,8 @@ bw.calc = function(points,  dist.method = 'Pythagorean', boot.n = 0, sam.size = 
 #'                seq(ymin(grid), ymax(grid), length.out=100))
 #'                )
 #' plot(grid); points(points);
-#' di = dist2point(grid, points, parallel=TRUE, dist.method='Pythagorean')
-#' plot(di)
+#' di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Pythagorean')
+#' plot(di, col = viridis::viridis(9))
 #' points(points)
 
 
@@ -308,7 +322,6 @@ dist2point <-
            maxram=4) {
     
     
-    dd =32;
     .dist2point.core.h <- function(x) {
       require(rasterExtras)
       coords = latlonfromcell(as.vector(x),
@@ -345,42 +358,59 @@ dist2point <-
       
     }
     
+    dd =8;
     xx = seq(1:raster::ncell(grid))
-    ##Check grid x points matrix size.
+    ##Check max matrix size.
     vol = (dd * (nrow(points) * raster::ncell(grid))) / 1024 / 1024 / 1024
-    ramtarg= maxram/2;
-    targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
-    
-    if (targ.n > raster::ncell(grid)) {
-      splits = list(seq(1:raster::ncell(grid)))
-      
-    } else {
-      n = targ.n
-      f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
-      splits = split(xx, f)
-    }
     
     
     if (parallel == FALSE) {
+      ramtarg= maxram;
+      
+      targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
+      
+      if (targ.n > raster::ncell(grid)) {
+        splits = list(seq(1:raster::ncell(grid)))
+        
+      } else {
+        n = targ.n
+        f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
+        splits = split(xx, f)
+      }
+      
       if (dist.method == "Pythagorean") {
         di = unlist(lapply(splits, .dist2point.core.p))
         
       } else if (dist.method == "Haversine") {
         di = unlist(lapply(splits, .dist2point.core.h))
-        
       }
     } else {
+      ramtarg= maxram/nclus;
+      
+      targ.n = ceiling((ramtarg / vol) * raster::ncell(grid))
+      
+      if (targ.n > raster::ncell(grid)) {
+        splits = list(seq(1:raster::ncell(grid)))
+        
+      } else {
+        n = targ.n
+        f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
+        splits = split(xx, f)
+      }
+      
       if (nclus > length(splits)) {
-        n = length(xx) / nclus
+        n = targ.n / nclus;
         
         f <- sort(rep(1:(trunc(length(xx) / n) + 1), n))[1:length(xx)]
         splits = split(xx, f)
       }
+    
       
       ##Reporting bloc
       cat("BEGIN PARALLEL COMPUTATION\n");
       cat("Core count: ", nclus, "\n");
       cat("Cells/iteration: ", length(splits[[1]]), "of", raster::ncell(grid), "\n")
+      cat("Iterations total: ", raster::ncell(grid)/length(splits[[1]]), "\n")
       cat("Points: ", nrow(points), "\n");
       cat("Maximum RAM per proc.: ", maxram/nclus, "\n");
       cat("Distance Method: ", dist.method, "\n\n");
