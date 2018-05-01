@@ -27,7 +27,7 @@ NULL
 #'                seq(ymin(grid), ymax(grid), length.out=100))
 #'                )
 #' plot(grid); points(points);
-#' den = gkde(grid, points, parallel=TRUE, dist.method='Pythagorean', bw= bw.calc(points))
+#' den = gkde(grid, points, parallel=TRUE, dist.method='Haversine', bw= 10)
 #' plot(den)
 #' points(points)
 
@@ -308,7 +308,7 @@ bw.calc = function(points,  dist.method = 'Pythagorean', boot.n = 0, sam.size = 
 #'                seq(ymin(grid), ymax(grid), length.out=100))
 #'                )
 #' plot(grid); points(points);
-#' di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Pythagorean')
+#' di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Haversine')
 #' plot(di, col = viridis::viridis(9))
 #' points(points)
 
