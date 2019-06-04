@@ -34,7 +34,7 @@ points = cbind(
                seq(ymin(grid), ymax(grid), length.out=100))
                )
 plot(grid); points(points);
-di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Pythagorean')
-plot(di, col = viridis::viridis(9))
+di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Haversine')
+plot(di)
 points(points)
 }

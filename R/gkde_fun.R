@@ -1,6 +1,9 @@
+#' @useDynLib rasterExtras
+#' @importFrom Rcpp sourceCpp
 #' @import raster
 #' @import parallel
 #' @import stats
+#' @import snow
 NULL
 
 #' Geographic Kernel Density Estimator using linear or Haversine distances
@@ -309,7 +312,7 @@ bw.calc = function(points,  dist.method = 'Pythagorean', boot.n = 0, sam.size = 
 #'                )
 #' plot(grid); points(points);
 #' di = dist2point(grid, points, parallel=TRUE, maxram = 0.5, nclus = 4, dist.method='Haversine')
-#' plot(di, col = viridis::viridis(9))
+#' plot(di)
 #' points(points)
 
 

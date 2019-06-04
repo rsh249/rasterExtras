@@ -4,8 +4,8 @@
 \alias{gkde}
 \title{Geographic Kernel Density Estimator using linear or Haversine distances}
 \usage{
-gkde(grid, points, parallel = TRUE, nclus = 4, dist.method = "Haversine",
-  maxram = 4, bw = 200)
+gkde(grid, points, parallel = TRUE, nclus = 4,
+  dist.method = "Haversine", maxram = 4, bw = 200)
 }
 \arguments{
 \item{grid}{A raster object to match.}
@@ -36,7 +36,7 @@ points = cbind(
                seq(ymin(grid), ymax(grid), length.out=100))
                )
 plot(grid); points(points);
-den = gkde(grid, points, parallel=TRUE, dist.method='Pythagorean', bw= bw.calc(points))
+den = gkde(grid, points, parallel=TRUE, dist.method='Haversine', bw= 10)
 plot(den)
 points(points)
 }

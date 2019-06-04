@@ -4,8 +4,8 @@
 \alias{bw.calc}
 \title{Bandwidth selection tool for gkde()}
 \usage{
-bw.calc(points, dist.method = "Pythagorean", boot.n = 0, sam.size = 100,
-  maxram = 4)
+bw.calc(points, dist.method = "Pythagorean", boot.n = 0,
+  sam.size = 100, maxram = 4)
 }
 \arguments{
 \item{points}{A two column data frame in the form (lon,lat) or (x,y)}
