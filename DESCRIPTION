@@ -1,11 +1,11 @@
 Package: rasterExtras
 Type: Package
 Title: Parallel computing with rasters
-Version: 1.0
+Version: 1.01
 Date: 2018-01-18
 Author: Robert S. Harbert
-Maintainer: Robert S. Harbert <rharbert@amnh.org>
-Description: Towards a general framework for parallel computation with Raster and other geospatial objects in R with C++ backend.
+Maintainer: Robert S. Harbert <rharbert@stonehill>
+Description: Towards a general framework for parallel computation with Rasters in R with C++ backend.
 License: GPL (>= 2)
 Imports: 
     Rcpp,
